@@ -70,7 +70,7 @@ def make_client(model: str | None = None, provider: Any | None = None, cache_pat
     from llm_evals.judges.client import JudgeClient
 
     if provider is None and backend == "claude-code":
-        from ticket_quality.claude_code import ClaudeCodeProvider
+        from llm_evals.runners.providers.claude_code import ClaudeCodeProvider
 
         provider = ClaudeCodeProvider()
     elif provider is None:

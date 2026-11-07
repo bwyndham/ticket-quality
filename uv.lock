@@ -351,8 +351,8 @@ wheels = [
 
 [[package]]
 name = "llm-evals"
-version = "0.1.0"
-source = { git = "https://github.com/bwyndham/llm-evals?rev=v0.1.0#389d7446206fc1acbe4758b1763221470e4cfb87" }
+version = "0.2.0"
+source = { git = "https://github.com/bwyndham/llm-evals?rev=v0.2.0#7627b52cbe124e4c0300b7715cb355350670e13f" }
 dependencies = [
     { name = "anthropic" },
     { name = "gherkin-official" },
@@ -1287,7 +1287,7 @@ requires-dist = [
     { name = "anthropic", specifier = ">=1.15.0" },
     { name = "gherkin-official", specifier = ">=42.0.1" },
     { name = "httpx", specifier = ">=0.27" },
-    { name = "llm-evals", git = "https://github.com/bwyndham/llm-evals?rev=v0.1.0" },
+    { name = "llm-evals", git = "https://github.com/bwyndham/llm-evals?rev=v0.2.0" },
     { name = "pydantic", specifier = ">=2.14.1" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "typer", specifier = ">=0.27.3" },

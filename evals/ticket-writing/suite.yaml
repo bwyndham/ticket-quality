@@ -9,7 +9,7 @@ runner: {type: prompt, output_schema: ticket_markdown}
 
 # The version CI compares a PR against. Its system prompt IS standard/writer-guide.md,
 # so editing the guide is what gets gated. Past guides are archived in versions/ (v1, v2).
-baseline: versions/current.yaml  # = v2 since 2026-11-07 (PROMOTE +6.5 pts vs v1, run 52a0f507)
+baseline: versions/current.yaml  # = v3 since 2026-11-07 (Why/Impact section; run 35fdfcbd)
 
 plugins: [plugins/ticket_plugin.py]
 mock: plugins/ticket_plugin.py:respond   # offline stand-in for --provider mock

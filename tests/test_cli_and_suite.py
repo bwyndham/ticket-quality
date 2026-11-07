@@ -34,7 +34,8 @@ def test_check_exit_codes_and_json():
 
 def test_check_stdin_and_unknown_ref():
     r = runner.invoke(app, ["check", "-", "--title", "Send reminders 3 days after due"],
-                      input="## Summary\nBookkeepers chase payments by hand.\n\n## Acceptance criteria\n- [ ] reminder sent\n")
+                      input="## Why\nBookkeepers chase payments by hand.\n\n## Summary\nReminders go out "
+                            "automatically.\n\n## Acceptance criteria\n- [ ] reminder sent\n")
     assert r.exit_code == 0, r.output
     assert runner.invoke(app, ["check", "not-a-file.md"]).exit_code == 2
 
@@ -51,7 +52,8 @@ def test_install_skills_copies_current_guide(tmp_path):
 
 @pytest.mark.parametrize("path", ["standard/writer-guide.md", "evals/ticket-writing/prompts/seeded_inline_detail.md",
                                   "evals/ticket-writing/prompts/writer-guide-v1.md",
-                                  "evals/ticket-writing/prompts/writer-guide-v2.md"])
+                                  "evals/ticket-writing/prompts/writer-guide-v2.md",
+                                  "evals/ticket-writing/prompts/writer-guide-v3.md"])
 def test_prompts_are_safe_as_jinja_templates(path):
     # The eval suite renders these with Jinja; a stray {{, {% or {# would break or change them.
     text = (ROOT / path).read_text()
@@ -123,5 +125,5 @@ def test_live_guide_is_the_promoted_version():
     from llm_evals.runners.manifest import load_manifest
 
     current = load_manifest(SUITE / "versions" / "current.yaml", SUITE)
-    v2 = load_manifest(SUITE / "versions" / "v2.yaml", SUITE)
-    assert current.id == v2.id
+    v3 = load_manifest(SUITE / "versions" / "v3.yaml", SUITE)
+    assert current.id == v3.id

@@ -34,7 +34,8 @@ def test_vague_example_fails_for_the_right_reasons():
 
 def ticket(ac: list[str], summary="Bookkeepers need this so they stop chasing payments by hand.", title="Send reminders 3 days after due date", extra=""):
     body = "\n".join(f"- [ ] {a}" for a in ac)
-    return parse_ticket(f"# {title}\n\n## Summary\n{summary}\n\n## Acceptance criteria\n{body}\n{extra}")
+    return parse_ticket(f"# {title}\n\n## Why\nThey chase late payers by hand.\n\n## Summary\n{summary}\n\n"
+                        f"## Acceptance criteria\n{body}\n{extra}")
 
 
 def test_numeric_terms_allowed_with_a_number():
@@ -70,7 +71,7 @@ def test_bug_needs_repro_fields():
     t = parse_ticket("# Search returns no results\n\n**Type:** Bug\n\n## Summary\nSearch is broken for everyone.\n\n"
                      "## Acceptance criteria\n- [ ] searching 'invoice' returns invoices\n")
     msgs = [f.message for f in run_rules(t, STD) if f.rule == "required_sections"]
-    assert len(msgs) == 3  # steps, expected, actual
+    assert len(msgs) == 4  # impact, steps, expected, actual
 
 
 def test_invalid_gherkin_and_missing_then():
@@ -123,3 +124,23 @@ def test_vague_terms_skip_ordinary_phrases(item):
 
 def test_as_expected_at_clause_end_still_fails():
     assert "ac_vague_language" in ids(run_rules(ticket(["The export works as expected."]), STD))
+
+
+def test_stories_and_bugs_need_a_why_tasks_dont():
+    body = "## Summary\nAn export button downloads orders.\n\n## Acceptance criteria\n- [ ] a CSV downloads\n"
+    story = parse_ticket("# Add CSV export to orders\n\n**Type:** Story\n\n" + body)
+    task = parse_ticket("# Upgrade lodash to 4.18\n\n**Type:** Task\n\n" + body)
+    assert any("Why" in f.message for f in run_rules(story, STD) if f.rule == "required_sections")
+    assert not [f for f in run_rules(task, STD) if f.rule == "required_sections"]
+
+
+@pytest.mark.parametrize("heading", ["Why", "Impact", "Why this matters"])
+def test_impact_and_why_are_the_same_section(heading):
+    t = parse_ticket(f"# Add CSV export to orders\n\n## {heading}\nFinance re-types data.\n\n## Summary\nx y z w v\n")
+    assert t.why == "Finance re-types data." and "re-types" not in t.summary
+
+
+def test_not_stated_counts_as_present():
+    t = parse_ticket("# Add CSV export to orders\n\n## Why\nNot stated in the request.\n\n## Summary\nAn export "
+                     "button downloads orders.\n\n## Acceptance criteria\n- [ ] a CSV downloads\n")
+    assert "required_sections" not in ids(run_rules(t, STD))

@@ -8,9 +8,10 @@
 #
 # THE SHAPE OF A TICKET
 #   A ticket has two layers:
-#     1. The human section, at the top: title, a short summary, acceptance
-#        criteria, out of scope, open questions (and for bugs: steps, expected,
-#        actual). Someone should get what, who and why in about 30 seconds.
+#     1. The human section, at the top: title, why (stories) or impact (bugs),
+#        a short summary, acceptance criteria, out of scope, open questions (and
+#        for bugs: steps, expected, actual). Someone should get what, who and
+#        why in about 30 seconds. Tasks may skip the why when it's obvious.
 #     2. The agent context, at the bottom and collapsed: background, assumptions,
 #        implementation notes, file paths, data shapes, links. Useful to an agent
 #        or the engineer doing the work; it doesn't belong in the human section.
@@ -32,11 +33,11 @@ rules:
   - id: required_sections
     group: structure
     severity: error
-    what: The ticket has the sections its type needs.
+    what: The ticket has the sections its type needs. Stories and bugs say why (a "Why" or "Impact" section); tasks needn't.
     params:
-      story: [title, summary, acceptance_criteria]
+      story: [title, why, summary, acceptance_criteria]
       task: [title, summary, acceptance_criteria]
-      bug: [title, summary, steps_to_reproduce, expected, actual, acceptance_criteria]
+      bug: [title, why, summary, steps_to_reproduce, expected, actual, acceptance_criteria]
 
   - id: placeholders
     group: structure
@@ -71,7 +72,7 @@ rules:
     severity: warn
     what: The summary is 1 to 4 sentences.
     params:
-      min_words: 8
+      min_words: 5
       max_words: 70
       max_sentences: 4
 

@@ -28,6 +28,7 @@ AgentStyle = Literal["collapsed", "heading", "none"]
 class Ticket(BaseModel):
     title: str = ""
     type: TicketType = "story"
+    why: str = ""  # "## Why" or "## Impact": the problem or outcome behind the work
     summary: str = ""
     acceptance_criteria: list[str] = Field(default_factory=list)
     ac_format: AcFormat = "none"
@@ -54,8 +55,10 @@ class Ticket(BaseModel):
 # --- section names -----------------------------------------------------------
 
 _ALIASES: dict[str, tuple[str, ...]] = {
-    "summary": ("summary", "description", "overview", "context", "problem", "why", "goal",
-                "user story", "background", "what and why", "tl;dr", "tldr"),
+    "why": ("why", "impact", "why this matters", "why it matters", "problem", "motivation", "goal",
+            "business impact", "user impact", "customer impact", "reason"),
+    "summary": ("summary", "description", "overview", "context", "what", "user story", "background",
+                "what and why", "tl;dr", "tldr"),
     "acceptance_criteria": ("acceptance criteria", "acceptance criterion", "ac", "a/c",
                             "definition of done", "done when", "success criteria",
                             "requirements", "criteria"),
@@ -247,6 +250,8 @@ def parse_ticket(markdown: str, *, title: str | None = None, ticket_type: str | 
         canon = _canonical(heading)
         if canon == "summary":
             summary_parts.append(body)
+        elif canon == "why":
+            t.why = (t.why + "\n" + body).strip()
         elif canon == "acceptance_criteria":
             t.ac_raw = (t.ac_raw + "\n" + body).strip()
         elif canon in ("out_of_scope", "open_questions", "assumptions", "steps_to_reproduce"):

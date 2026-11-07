@@ -2,8 +2,11 @@
 
 **Type:** Bug
 
+## Impact
+Customers are charged twice for one order. Three were hit last week, all on mobile Safari, and each needs a manual refund.
+
 ## Summary
-When a card is declined and the customer taps "Try again" at checkout, they're charged twice. Three customers hit this last week, all on mobile Safari.
+Retrying a declined card at checkout must charge the customer once.
 
 ## Steps to reproduce
 1. On mobile Safari, check out with a card that declines once (Stripe test card 4000 0000 0000 0341)

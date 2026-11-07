@@ -1,0 +1,13 @@
+# Archived: v3, promoted to the live guide 2026-11-07 (PROMOTE vs v2 under the
+# new Why rule, run 35fdfcbd; coverage, precision and gaps held). v2 plus a Why (stories) / Impact (bugs) section first in the
+# human section, never invented (else "Not stated" + an open question), tasks
+# exempt, and real reasons behind pressure (customer, deadline) kept.
+name: v3
+model: claude-sonnet-5-5
+prompt_templates:
+  system: prompts/writer-guide-v3.md
+  user: prompts/user.jinja
+params:
+  max_tokens: 4000
+  effort: low
+skills: []

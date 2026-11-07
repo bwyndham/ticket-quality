@@ -61,7 +61,8 @@ def human_words(t: Ticket) -> int:
 
 # --- structure ---------------------------------------------------------------------
 
-_FIELD_LABEL = {"title": "a title", "summary": "a Summary", "acceptance_criteria": "Acceptance criteria",
+_FIELD_LABEL = {"title": "a title", "why": "a Why (or Impact) section", "summary": "a Summary",
+                "acceptance_criteria": "Acceptance criteria",
                 "steps_to_reproduce": "Steps to reproduce", "expected": "Expected behaviour",
                 "actual": "Actual behaviour"}
 
@@ -73,9 +74,15 @@ def _required(t: Ticket, p: dict[str, Any]) -> list[tuple[str, str]]:
         value = getattr(t, f, None)
         if not value or (isinstance(value, str) and not value.strip()):
             label = _FIELD_LABEL.get(f, f)
-            out.append((f"{t.type.capitalize()} is missing {label}.",
-                        f"Add a `## {label.removeprefix('a ').removeprefix('A ')}` section."
-                        if f != "title" else "Give the ticket a title that names the change."))
+            if f == "title":
+                fix = "Give the ticket a title that names the change."
+            elif f == "why":
+                fix = ("Add `## Impact`: who is affected, how often, how badly." if t.type == "bug" else
+                       "Add `## Why`: the problem or outcome this serves. If nobody has said, write "
+                       "'Not stated' and ask under Open questions.")
+            else:
+                fix = f"Add a `## {label.removeprefix('a ').removeprefix('A ')}` section."
+            out.append((f"{t.type.capitalize()} is missing {label}.", fix))
     return out
 
 
@@ -143,9 +150,9 @@ def _summary(t: Ticket, p: dict[str, Any]) -> list[tuple[str, str]]:
     if not t.summary:
         return []
     n, s = words(t.summary), _sentences(t.summary)
-    if n < p.get("min_words", 8):
-        return [(f"Summary is only {n} words: it doesn't say who this is for or why.",
-                 "Add one sentence on who needs this and what problem it solves.")]
+    if n < p.get("min_words", 5):
+        return [(f"Summary is only {n} words: it doesn't say what changes and for whom.",
+                 "Say in a sentence what will be different and who it's for.")]
     if n > p.get("max_words", 70) or s > p.get("max_sentences", 4):
         return [(f"Summary is {n} words / {s} sentences; aim for 1 to {p.get('max_sentences', 4)} short sentences.",
                  "Keep what, who and why; move the rest into the Agent context.")]

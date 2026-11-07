@@ -70,7 +70,10 @@ def respond(*, system: str | None, user: str, rng: Any) -> dict[str, Any]:
         assumptions.append("The request doesn't say who the user is; assumed it is an internal team member.")
 
     background = " ".join(_sentences(ask))
-    parts = [f"# {title}", "", "**Type:** Story", "", "## Summary", summary, "", "## Acceptance criteria", *ac, "",
+    why = []
+    if "## Why" in system:  # the guide asks for a Why section: the mock never invents one
+        why = ["## Why", "Not stated in the request.", ""]
+    parts = [f"# {title}", "", "**Type:** Story", "", *why, "## Summary", summary, "", "## Acceptance criteria", *ac, "",
              "## Out of scope", "- Changes not mentioned in the request", ""]
     if layered:
         parts += ["<details>", "<summary>Agent context</summary>", "", "### Background", background, ""]

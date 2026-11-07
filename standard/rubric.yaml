@@ -28,12 +28,14 @@ items:
       context section), could a busy teammate understand what is changing, for
       whom, and why in about 30 seconds, without needing the agent context?
 
-  - id: why_stated
+  - id: why_is_real
     applies: always
-    severity: warn
+    severity: error
     question: >-
-      Does the main part of the ticket say who this is for or what problem it
-      solves (the why), not only what to build?
+      If this is a story or a bug, does its Why (or Impact) section name the
+      problem, the outcome or the impact (who is affected and how), rather than
+      restating the feature or the fix? "Not stated in the request" with an open
+      question asking for the reason counts as yes. Answer yes for a task.
 
   - id: testable_ac
     applies: always
@@ -105,6 +107,14 @@ items:
       Is every separate thing the request asks for covered by at least one
       acceptance criterion, with none dropped and no two different asks merged
       into one criterion?
+
+  - id: why_not_invented
+    applies: with_ask
+    severity: error
+    question: >-
+      Is every reason, impact, deadline or customer the ticket gives as the why
+      supported by the request, with no motivation the request didn't give
+      presented as fact? Writing "Not stated in the request" and asking is fine.
 
   - id: gaps_flagged
     applies: with_ask

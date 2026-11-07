@@ -11,6 +11,9 @@ Write the ticket in Markdown, in this shape:
 
 **Type:** Story | Bug | Task
 
+## Why
+<the problem or outcome this serves; a bug uses ## Impact>
+
 ## Summary
 <A full description: what is being asked, the background that led to it, who it's for and why, and anything else relevant from the request.>
 

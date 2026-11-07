@@ -1,0 +1,35 @@
+[project]
+name = "ticket-quality"
+version = "0.1.0"
+description = "One ticket standard, three uses: lint any Jira/Linear ticket, guide Claude to write them, and gate changes to that guide with llm-evals."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+dependencies = [
+    "llm-evals @ git+https://github.com/bwyndham/llm-evals@v0.1.0",
+    "anthropic>=1.15.0",
+    "gherkin-official>=42.0.1",
+    "httpx>=0.27",
+    "pydantic>=2.14.1",
+    "pyyaml>=6.0.3",
+    "typer>=0.27.3",
+]
+
+[project.scripts]
+ticket-lint = "ticket_quality.cli:app"
+# llm-evals with model calls on your Claude subscription (claude CLI) instead of an API key
+ticket-evals = "ticket_quality.claude_code:evals_main"
+
+[build-system]
+requires = ["uv_build>=0.11.2,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = ["pytest>=9.1.1"]
+
+# Install the CLI editable (`uv tool install --editable .`) so it reads the
+# standard/ folder in this repo: edit the standard, and `ticket-lint` uses it at once.
+
+[tool.pytest.ini_options]
+markers = ["slow: runs the mock eval gate end to end (~20 s)"]

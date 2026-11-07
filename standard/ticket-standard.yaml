@@ -1,0 +1,189 @@
+# The ticket standard: the one definition of a good ticket.
+#
+# Everything reads this file:
+#   - `ticket-lint check` runs the rules below on any ticket (yours or Claude's).
+#   - The eval suite (evals/ticket-writing) runs the same rules as gated checks.
+#   - The judge rubric lives next to it in rubric.yaml; the writing guide Claude
+#     follows is writer-guide.md. Change all three together.
+#
+# THE SHAPE OF A TICKET
+#   A ticket has two layers:
+#     1. The human section, at the top: title, a short summary, acceptance
+#        criteria, out of scope, open questions (and for bugs: steps, expected,
+#        actual). Someone should get what, who and why in about 30 seconds.
+#     2. The agent context, at the bottom and collapsed: background, assumptions,
+#        implementation notes, file paths, data shapes, links. Useful to an agent
+#        or the engineer doing the work; it doesn't belong in the human section.
+#   Collapsed means `<details><summary>Agent context</summary>` (GitHub, most
+#   markdown), a `+++ Agent context` toggle (Linear) or an expand block (Jira).
+#   A plain `## Agent context` heading as the LAST section is accepted.
+#
+# SEVERITY
+#   error: the ticket fails.  warn: passes with a warning.  info: a note.
+#   `ticket-lint check --strict` fails on warnings too.
+#
+# GROUP
+#   The eval suite gates each group as its own check: structure, skimmable, precise.
+
+version: 1
+
+rules:
+  # --- structure -----------------------------------------------------------
+  - id: required_sections
+    group: structure
+    severity: error
+    what: The ticket has the sections its type needs.
+    params:
+      story: [title, summary, acceptance_criteria]
+      task: [title, summary, acceptance_criteria]
+      bug: [title, summary, steps_to_reproduce, expected, actual, acceptance_criteria]
+
+  - id: placeholders
+    group: structure
+    severity: error
+    what: No unfinished placeholders (TBD, TODO, ???, <fill me in>).
+    params:
+      patterns:
+        - '\bTBD\b'
+        - '\bTODO\b'
+        - '\bFIXME\b'
+        - '\?\?\?'
+        - '(?i)lorem ipsum'
+        - '(?i)\[insert[^\]]*\]'
+        - '<[a-z][a-z _-]*>'      # <user name>, <link>: lowercase angle-bracket stand-ins
+
+  - id: gherkin_valid
+    group: structure
+    severity: error
+    what: Gherkin acceptance criteria parse, and every scenario has a Then.
+
+  # --- skimmable: the human section stays short --------------------------
+  - id: human_section_budget
+    group: skimmable
+    severity: error
+    what: The human section stays short enough to read in about 30 seconds.
+    params:
+      warn_words: 150   # ~30 seconds of reading
+      max_words: 220
+
+  - id: summary_length
+    group: skimmable
+    severity: warn
+    what: The summary is 1 to 4 sentences.
+    params:
+      min_words: 8
+      max_words: 70
+      max_sentences: 4
+
+  - id: ac_item_length
+    group: skimmable
+    severity: warn
+    what: Each acceptance criterion is one short, checkable statement.
+    params:
+      max_words: 30            # checklist items; a Gherkin scenario may have up to 8 steps
+      max_scenario_steps: 8
+
+  - id: agent_detail_in_human_section
+    group: skimmable
+    severity: warn
+    what: Implementation detail (code, file paths, stack traces, payloads) sits in the agent context, not the human section.
+    params:
+      max_inline_code: 3       # a few `identifiers` are fine
+      path_pattern: '(?<![\w/])(?:[\w.-]+/)+[\w.-]+\.(?:py|ts|tsx|js|jsx|go|rb|java|kt|swift|cs|sql|ya?ml|json|tf|sh|css|scss|html|proto)\b'
+      trace_pattern: '(?m)^\s*(?:Traceback \(most recent call last\)|at [\w.$<>]+\(.*:\d+\)|File ".*", line \d+)'
+
+  - id: agent_context_placement
+    group: skimmable
+    severity: warn
+    what: The agent context, when there is one, is the last thing in the ticket.
+
+  - id: agent_context_collapsed
+    group: skimmable
+    severity: info
+    what: The agent context is collapsed (details block, Linear toggle or Jira expand), not just a heading.
+
+  # --- precise: nothing vague ----------------------------------------------
+  - id: title_length
+    group: precise
+    severity: error
+    what: The title is 3+ words and at most 80 characters.
+    params:
+      min_words: 3
+      max_chars: 80
+
+  - id: title_vague
+    group: precise
+    severity: warn
+    what: The title names the change, not a topic ("Improve dashboard", "Fix bug", "Misc updates").
+    params:
+      vague_words: [misc, miscellaneous, various, stuff, things, issues, cleanup, tweaks, improvements, updates, enhancements, changes, etc]
+      vague_openers: [fix, update, improve, enhance, change, tweak, investigate, look into, refactor, clean up, handle, support, work on]
+      short_title_words: 4      # an opener plus fewer than this many words is a topic, not a change
+
+  - id: ac_count
+    group: precise
+    severity: warn
+    what: 1 to 10 acceptance criteria. More than 10 usually means the ticket should be split.
+    params:
+      min: 1
+      max: 10
+
+  - id: ac_vague_language
+    group: precise
+    severity: error
+    what: Acceptance criteria avoid words a tester can't check.
+    params:
+      # Always vague: there's no way to test these as written.
+      terms:
+        - works correctly
+        - work correctly
+        - works properly
+        - work properly
+        - works as expected
+        - as expected(?=\s*(?:[.,;:!)]|$))   # "works as expected", not "expected cash inflows"
+        - as needed
+        - as appropriate
+        - where appropriate
+        - if needed
+        - user[- ]friendly
+        - intuitive
+        - seamless(?:ly)?
+        - robust
+        - nice
+        - better
+        - improved
+        - optimi[sz]ed
+        - appropriate(?:ly)?
+        - reasonable
+        - properly
+        - correctly
+        - etc\.?
+        - and so on
+        - and more
+        - and other
+        - should be able to handle
+        - and/or
+      # Vague unless the same criterion states a number ("loads in under 2 s" is fine).
+      numeric_terms:
+        - fast
+        - faster
+        - quick(?:ly)?
+        - slow
+        - performant
+        - responsive
+        - scalable
+        - efficient(?:ly)?
+        - large
+        - small
+        - (?<!how )many              # not "how many"
+        - few
+        - (?<!as )soon(?! as)        # not "as soon as"
+        - timely
+        - minimal
+        - high
+        - low
+
+  - id: open_questions_unresolved
+    group: precise
+    severity: warn
+    what: Open questions are answered before the ticket goes into a sprint.

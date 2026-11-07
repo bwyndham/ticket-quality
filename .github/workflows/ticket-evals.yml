@@ -1,0 +1,33 @@
+# Gate changes to how Claude writes tickets. A PR that changes the writer guide, the
+# model or its params (anything the model sees) runs the base branch's version and the
+# PR's on the same requests and posts PROMOTE / HOLD / ROLLBACK as a PR comment.
+name: ticket-evals
+on:
+  pull_request:
+    paths:
+      - "standard/**"
+      - "evals/ticket-writing/**"
+      - "src/ticket_quality/**"
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync && uv run pytest -q
+  gate:
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bwyndham/llm-evals@v0.1.0
+        with:
+          suite: evals/ticket-writing
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          cost-cap: "15"
+          # Judges are report-only until calibrated; turn them on (false) once you've
+          # labelled them, or for a run you want the rubric scores on.
+          skip-judges: "true"

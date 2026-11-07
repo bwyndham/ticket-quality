@@ -1,0 +1,123 @@
+# The judge's half of the standard: yes/no questions a model answers about a ticket.
+#
+# Read by `ticket-lint check` (one judge call per ticket) and by the eval suite's
+# `checklist` check. Rules a regex can check live in ticket-standard.yaml; these
+# are the ones that need reading comprehension.
+#
+# - Phrase every question so "yes" is the good answer.
+# - `applies`: always | bug (bug tickets only) | with_ask (only when the request
+#   the ticket was written from is available).
+# - `severity`: error fails the ticket, warn is a warning.
+# - Keep ids stable. Rewording a question resets that item's judge calibration in
+#   the eval suite (it must earn its place again against your labels).
+
+items:
+  - id: title_states_change
+    applies: always
+    severity: error
+    question: >-
+      Does the title name the specific change or outcome (what will be different
+      when this is done), rather than a vague topic, a component name, or a
+      restatement of the problem?
+
+  - id: human_skimmable
+    applies: always
+    severity: error
+    question: >-
+      Reading only the main part of the ticket (everything except the agent
+      context section), could a busy teammate understand what is changing, for
+      whom, and why in about 30 seconds, without needing the agent context?
+
+  - id: why_stated
+    applies: always
+    severity: warn
+    question: >-
+      Does the main part of the ticket say who this is for or what problem it
+      solves (the why), not only what to build?
+
+  - id: testable_ac
+    applies: always
+    severity: error
+    question: >-
+      Is every acceptance criterion an observable outcome that a tester could mark
+      pass or fail, with no criterion resting on a subjective word (such as
+      "intuitive", "fast" or "works correctly") that has no measurable threshold?
+
+  - id: ac_complete
+    applies: always
+    severity: error
+    question: >-
+      Do the acceptance criteria cover everything the summary says will change,
+      so that nothing the ticket promises is left without a criterion?
+
+  - id: scope_bounded
+    applies: always
+    severity: warn
+    question: >-
+      Is the scope bounded: is it clear what is not included (an out-of-scope
+      section, or boundaries just as clear), with no open-ended phrases such as
+      "and other improvements" or "etc."?
+
+  - id: single_deliverable
+    applies: always
+    severity: warn
+    question: >-
+      Does the ticket describe one coherent deliverable that one person or pair
+      could finish within a sprint, rather than several unrelated pieces of work
+      that should be separate tickets?
+
+  - id: self_contained
+    applies: always
+    severity: error
+    question: >-
+      Is the main part self-contained, free of undefined jargon, acronyms or
+      references a new team member couldn't resolve (such as "the thing we
+      discussed", "like last time" or "per the meeting")?
+
+  - id: agent_context_separated
+    applies: always
+    severity: warn
+    question: >-
+      Is implementation detail (file paths, code, data shapes, technical
+      background, long reference lists) kept in the agent context section rather
+      than the main part? Answer yes if the ticket has no such detail.
+
+  - id: bug_reproducible
+    applies: bug
+    severity: error
+    question: >-
+      If this is a bug report, does it give numbered steps to reproduce plus the
+      expected and the actual behaviour, specific enough that someone else could
+      reproduce it? Answer yes if the ticket is not a bug report.
+
+  - id: no_unstated_requirements
+    applies: with_ask
+    severity: error
+    question: >-
+      Does the ticket avoid stating any requirement that the request did not state
+      (new features, numbers, limits, formats, permissions or behaviours), keeping
+      anything it inferred under assumptions or open questions?
+
+  - id: ask_fully_covered
+    applies: with_ask
+    severity: error
+    question: >-
+      Is every separate thing the request asks for covered by at least one
+      acceptance criterion, with none dropped and no two different asks merged
+      into one criterion?
+
+  - id: gaps_flagged
+    applies: with_ask
+    severity: warn
+    question: >-
+      Where the request leaves something unsaid that the ticket needed (such as
+      who the user is, or a detail the request only implies), is it recorded as an
+      assumption or open question instead of being stated as a firm requirement?
+
+  - id: urgency_no_scope_change
+    applies: with_ask
+    severity: error
+    question: >-
+      Did any urgency or pressure language in the request ("ASAP", "URGENT", "the
+      CEO wants this") leave the scope unchanged, with no requirement added,
+      dropped or altered because of it? Answer yes if there was none.

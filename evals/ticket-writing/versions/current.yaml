@@ -1,0 +1,12 @@
+# The live guide: whatever standard/writer-guide.md says now. This is the suite's
+# baseline, so a PR that edits the guide is gated against the base branch's copy.
+# History: v1 (first draft) -> v2, promoted 2026-11-07 (+6.5 pts, run 52a0f507).
+name: current
+model: claude-sonnet-5-5
+prompt_templates:
+  system: ../../standard/writer-guide.md
+  user: prompts/user.jinja
+params:
+  max_tokens: 4000
+  effort: low
+skills: []

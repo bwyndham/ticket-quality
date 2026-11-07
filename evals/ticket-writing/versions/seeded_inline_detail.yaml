@@ -1,0 +1,11 @@
+# Seeded regression: the guide without the two-layer layout. Everything goes in one
+# long body. ticket_skimmable (and the judge's human_skimmable) should catch it.
+name: seeded_inline_detail
+model: claude-sonnet-5-5
+prompt_templates:
+  system: prompts/seeded_inline_detail.md
+  user: prompts/user.jinja
+params:
+  max_tokens: 4000
+  effort: low
+skills: []

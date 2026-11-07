@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+# eval results: local runs, reports and logs (they can contain absolute paths)
+.evals/
+out/
+out-*/
+out*.log

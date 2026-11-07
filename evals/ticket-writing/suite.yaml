@@ -1,0 +1,56 @@
+# Gates changes to how Claude writes tickets: the writer guide (standard/writer-guide.md),
+# the model, or its parameters. Every PR that changes them runs the old and the new
+# version on the same requests and gets PROMOTE / HOLD / ROLLBACK.
+suite: ticket-writing
+
+# One model call per case. The writer returns {"ticket_markdown": "..."}; the
+# `ticket_markdown` schema parses it with the same parser ticket-lint uses.
+runner: {type: prompt, output_schema: ticket_markdown}
+
+# The version CI compares a PR against. Its system prompt IS standard/writer-guide.md,
+# so editing the guide is what gets gated. Past guides are archived in versions/ (v1, v2).
+baseline: versions/current.yaml  # = v2 since 2026-11-07 (PROMOTE +6.5 pts vs v1, run 52a0f507)
+
+plugins: [plugins/ticket_plugin.py]
+mock: plugins/ticket_plugin.py:respond   # offline stand-in for --provider mock
+
+cases:
+  # Synthetic requests rendered from known requirements (borrowed from llm-evals'
+  # spec-writing pilot): every case has a true answer, so `covers_ask` and
+  # `gaps_flagged` can check it. Mixed vagueness, bundling, urgency, missing actors.
+  - render: ask_renderer
+    atoms_path: data/atoms.jsonl
+    n: 60
+    seed: 7
+  # Realistic requests with no known answer: checked by the rules and the judge.
+  # Replace and extend these with real (anonymised) requests from your teams.
+  - from: data/real_asks.jsonl
+
+checks:
+  # The standard's rules, one gated check per group (standard/ticket-standard.yaml).
+  - ticket_structure: {critical: true}   # sections present, no placeholders, Gherkin parses
+  - ticket_skimmable: {}                 # human section short, detail in a collapsed agent context
+  - ticket_precise: {}                   # specific title, testable criteria
+  # Known-answer checks on the rendered cases.
+  - covers_ask: {min_keyword_share: 0.6} # every stated requirement has an acceptance criterion
+  - gaps_flagged: {}                     # llm-evals built-in: a missing actor or hinted need is flagged
+  # The judge: the same rubric ticket-lint uses. Scored and reported every run; each
+  # question gates only after you've labelled ~50 answers and it agrees with you (κ ≥ 0.6).
+  - checklist:
+      rubric: ../../standard/rubric.yaml
+      template: ../../standard/judge/user.jinja
+      system_template: ../../standard/judge/system.jinja
+pairwise:   # report-only: which version's tickets a judge prefers
+  rubric: ../../standard/rubric.yaml
+  template: ../../standard/judge/pairwise.jinja
+  system_template: ../../standard/judge/pairwise_system.jinja
+judge: {model: claude-sonnet-5-5}
+
+# 3 samples x ~72 cases x 2 versions ≈ 430 writer calls per gated PR. Run
+# `llm-evals estimate evals/ticket-writing` for the dollar figure, then
+# `llm-evals aa` to measure noise before trusting the 5-point tolerance.
+samples: 3
+gate: {tolerance: 0.05}
+
+# A deliberately worse guide (no two-layer layout): `llm-evals seeded` must roll it back.
+seeded_variants: [versions/seeded_inline_detail.yaml]

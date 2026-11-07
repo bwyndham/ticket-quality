@@ -1,0 +1,10 @@
+# Archived: the first draft of the guide (baseline for the 2026-11-07 runs).
+name: v1
+model: claude-sonnet-5-5
+prompt_templates:
+  system: prompts/writer-guide-v1.md
+  user: prompts/user.jinja
+params:
+  max_tokens: 4000
+  effort: low
+skills: []

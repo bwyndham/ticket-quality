@@ -1,0 +1,13 @@
+# Archived: v2, promoted to the live guide 2026-11-07 (PROMOTE, +6.5 pts vs v1,
+# run 52a0f507). v1 plus three fixes from the first real run (2026-11-07):
+# keep qualifiers in criteria, ask for numbers instead of copying vague words,
+# and hold the word budget on bundled requests.
+name: v2
+model: claude-sonnet-5-5
+prompt_templates:
+  system: prompts/writer-guide-v2.md
+  user: prompts/user.jinja
+params:
+  max_tokens: 4000
+  effort: low
+skills: []

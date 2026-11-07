@@ -23,7 +23,7 @@ jobs:
     needs: tests
     steps:
       - uses: actions/checkout@v4
-      - uses: bwyndham/llm-evals@v0.1.0
+      - uses: bwyndham/llm-evals@v0.2.0
         with:
           suite: evals/ticket-writing
           anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}

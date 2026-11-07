@@ -65,3 +65,11 @@ def test_judge_failure_leaves_rules_standing(tmp_path):
     report = validate(t, STD, judge_client=client)
     assert report.judged is False and report.judge_note.startswith("judge skipped")
     assert report.verdict() == "PASS"
+
+
+def test_claude_code_backend_uses_llm_evals_provider(tmp_path, monkeypatch):
+    from llm_evals.runners.providers.claude_code import ClaudeCodeProvider
+
+    monkeypatch.setenv("CLAUDE_BIN", "/bin/claude-fake")
+    client = make_client(backend="claude-code", cache_path=tmp_path / "c.sqlite")
+    assert isinstance(client.provider, ClaudeCodeProvider)

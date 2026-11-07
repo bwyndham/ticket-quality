@@ -37,8 +37,8 @@ ticket-lint install-skills                 # write-ticket + review-ticket → ~/
 
 Every model call (the judge in `ticket-lint`, and the eval runs) can go through either backend:
 
-- **Your Claude subscription (Pro/Max)**: through the `claude` CLI in headless mode, with no API billing. `ticket-lint` uses it automatically when `ANTHROPIC_API_KEY` isn't set. For evals, use `ticket-evals` in place of `llm-evals`; it takes the same commands and flags. Each call runs with Claude Code's own prompt, tools, settings and MCP servers turned off, so the model sees only your prompt, just as with the API. Calls count against your plan's usage limits. If you hit one, the run stops with a clear message instead of recording failures. Reported costs are list-price equivalents, not charges.
-- **An API key**: set `ANTHROPIC_API_KEY`, then use `llm-evals` (or `TICKET_EVALS_BACKEND=api ticket-evals`). `ticket-lint --backend api` forces it. CI always uses the API key.
+- **Your Claude subscription (Pro/Max)**: through the `claude` CLI in headless mode, with no API billing. `ticket-lint` uses it automatically when `ANTHROPIC_API_KEY` isn't set. Eval runs use it with `--provider claude-code`, a built-in llm-evals provider. Each call runs with Claude Code's own prompt, tools, settings and MCP servers turned off, so the model sees only your prompt, just as with the API. Calls count against your plan's usage limits. If you hit one, the run stops with a clear message instead of recording failures. Reported costs are list-price equivalents, not charges.
+- **An API key**: set `ANTHROPIC_API_KEY`; evals use it with `--provider anthropic` (the default), and `ticket-lint --backend api` forces it. CI always uses the API key.
 
 ## Check tickets
 
@@ -78,21 +78,22 @@ Agent context collapses per tracker: `+++ Agent context` … `+++` in Linear, an
 | `ticket_structure` | yes, critical | missing sections, placeholders, broken Gherkin |
 | `ticket_skimmable` | yes | human section over budget, detail not in agent context |
 | `ticket_precise` | yes | topic titles, untestable criteria |
-| `covers_ask` | yes | a stated requirement with no acceptance criterion |
+| `requirements_covered` (llm-evals built-in) | yes | a stated requirement with no acceptance criterion |
 | `gaps_flagged` | yes | a missing user or implied need not flagged |
 | `checklist` (judge, rubric.yaml) | after calibration | everything that needs reading comprehension |
 
 ```bash
-ticket-evals estimate evals/ticket-writing                   # calls, tokens and time before running anything
-ticket-evals gate evals/ticket-writing --candidate versions/seeded_inline_detail.yaml \
-    --provider mock --skip-judges                            # offline wiring check: ROLLBACK, exit 2
-ticket-evals gate evals/ticket-writing --candidate versions/v2.yaml --skip-judges   # a real comparison, on your subscription
-ticket-evals aa evals/ticket-writing --runs 5                # measure noise before trusting the 5-pt tolerance
+uv run llm-evals estimate evals/ticket-writing             # calls, tokens and time before running anything
+uv run llm-evals gate evals/ticket-writing --candidate versions/seeded_inline_detail.yaml \
+    --provider mock --skip-judges                          # offline wiring check: ROLLBACK, exit 2
+uv run llm-evals gate evals/ticket-writing --candidate versions/v2.yaml \
+    --provider claude-code --skip-judges                   # a real comparison, on your subscription
+uv run llm-evals aa evals/ticket-writing --runs 5 --provider claude-code   # measure noise before trusting the 5-pt tolerance
 ```
 
 **To try a change to the guide**, open a PR that edits `standard/writer-guide.md` (or the model in `versions/current.yaml`). `.github/workflows/ticket-evals.yml` runs the base branch's guide against yours and comments with the decision. Add the `ANTHROPIC_API_KEY` repo secret first.
 
-**To make the judge count**, label its answers: run a gate without `--skip-judges`, then `ticket-evals calibration serve --db evals/ticket-writing/.evals/evals.sqlite` (or `calibration label ... --check checklist`). Once a rubric question has ~50 labels and agrees with you (Cohen's κ ≥ 0.6), it gates. Until then it's reported only. Rewording a question resets its calibration, so settle the wording first.
+**To make the judge count**, label its answers: run a gate without `--skip-judges`, then `uv run llm-evals calibration serve --db evals/ticket-writing/.evals/evals.sqlite` (or `calibration label ... --check checklist`). Once a rubric question has ~50 labels and agrees with you (Cohen's κ ≥ 0.6), it gates. Until then it's reported only. Rewording a question resets its calibration, so settle the wording first.
 
 ## Making it yours
 

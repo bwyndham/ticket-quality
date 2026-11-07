@@ -16,8 +16,8 @@ mock: plugins/ticket_plugin.py:respond   # offline stand-in for --provider mock
 
 cases:
   # Synthetic requests rendered from known requirements (borrowed from llm-evals'
-  # spec-writing pilot): every case has a true answer, so `covers_ask` and
-  # `gaps_flagged` can check it. Mixed vagueness, bundling, urgency, missing actors.
+  # spec-writing pilot): every case has a true answer, so `requirements_covered`
+  # and `gaps_flagged` can check it. Mixed vagueness, bundling, urgency, missing actors.
   - render: ask_renderer
     atoms_path: data/atoms.jsonl
     n: 60
@@ -32,7 +32,11 @@ checks:
   - ticket_skimmable: {}                 # human section short, detail in a collapsed agent context
   - ticket_precise: {}                   # specific title, testable criteria
   # Known-answer checks on the rendered cases.
-  - covers_ask: {min_keyword_share: 0.6} # every stated requirement has an acceptance criterion
+  # Every stated requirement has an acceptance criterion (or, for bugs, a repro field).
+  # The summary, assumptions, open questions and agent context don't count.
+  - requirements_covered:
+      fields: [acceptance_criteria, steps_to_reproduce, expected, actual]
+      min_keyword_share: 0.6
   - gaps_flagged: {}                     # llm-evals built-in: a missing actor or hinted need is flagged
   # The judge: the same rubric ticket-lint uses. Scored and reported every run; each
   # question gates only after you've labelled ~50 answers and it agrees with you (κ ≥ 0.6).

@@ -44,9 +44,13 @@ def applicable_items(standard: Standard, ticket: Ticket, *, has_ask: bool) -> li
     return out
 
 
-def build_payload(items: list[RubricItem], ticket: Ticket, ask: str | None) -> dict[str, Any]:
+def build_payload(items: list[RubricItem], ticket: Ticket, ask: str | None,
+                  siblings: list[Ticket] | None = None) -> dict[str, Any]:
     payload: dict[str, Any] = {"task": "checklist", "items": [{"id": i.id, "question": i.question} for i in items],
                                "ticket": ticket.judge_view()}
+    if siblings:
+        payload["other_tickets"] = [{"title": s.title, "summary": s.summary,
+                                     "acceptance_criteria": s.acceptance_criteria} for s in siblings]
     if ask:
         payload["ask"] = ask
     return payload
@@ -83,13 +87,14 @@ def make_client(model: str | None = None, provider: Any | None = None, cache_pat
                        cache_path=cache_path)
 
 
-def judge_ticket(ticket: Ticket, standard: Standard, client: Any, *, ask: str | None = None) -> list[Finding]:
+def judge_ticket(ticket: Ticket, standard: Standard, client: Any, *, ask: str | None = None,
+                 siblings: list[Ticket] | None = None) -> list[Finding]:
     """Findings for every rubric item answered "no" (or skipped by the judge)."""
     items = applicable_items(standard, ticket, has_ask=bool(ask))
     if not items:
         return []
     result = client.judge(standard.judge_system_path, standard.judge_user_path, {},
-                          build_payload(items, ticket, ask), Verdicts)
+                          build_payload(items, ticket, ask, siblings), Verdicts)
     answers = {v.id: v for v in result.parsed.items}
     findings = []
     for item in items:

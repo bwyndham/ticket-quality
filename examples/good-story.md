@@ -2,11 +2,11 @@
 
 **Type:** Story
 
-## Why
-Bookkeepers chase late payers by hand, and clients who aren't nudged pay later.
-
 ## Summary
 Bookkeepers can switch on automatic email reminders for overdue invoices.
+
+## Why
+Bookkeepers chase late payers by hand, and clients who aren't nudged pay later.
 
 ## Acceptance criteria
 - [ ] A bookkeeper can turn automatic reminders on or off per client in Settings › Reminders

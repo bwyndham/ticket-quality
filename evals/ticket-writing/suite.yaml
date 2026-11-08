@@ -9,7 +9,7 @@ runner: {type: prompt, output_schema: ticket_markdown}
 
 # The version CI compares a PR against. Its system prompt IS standard/writer-guide.md,
 # so editing the guide is what gets gated. Past guides are archived in versions/ (v1, v2).
-baseline: versions/current.yaml  # = v3 since 2026-11-07 (Why/Impact section; run 35fdfcbd)
+baseline: versions/current.yaml  # = v5 since 2026-11-08 (one ticket per unit of work; run 41419e0b)
 
 plugins: [plugins/ticket_plugin.py]
 mock: plugins/ticket_plugin.py:respond   # offline stand-in for --provider mock
@@ -32,10 +32,14 @@ checks:
   - ticket_skimmable: {}                 # human section short, detail in a collapsed agent context
   - ticket_precise: {}                   # specific title, testable criteria
   # Known-answer checks on the rendered cases.
-  # Every stated requirement has an acceptance criterion (or, for bugs, a repro field).
-  # The summary, assumptions, open questions and agent context don't count.
+  # One ticket per separate request: as many tickets as requests, none merged.
+  - tickets_split: {}
+  # Every stated requirement is stated by a ticket's title or one of its acceptance
+  # criteria (or, for bugs, a repro field). The summary, assumptions, open questions
+  # and agent context don't count. Titles count since 2026-11-08: a split ticket's
+  # title is often the requirement itself.
   - requirements_covered:
-      fields: [acceptance_criteria, steps_to_reproduce, expected, actual]
+      fields: [titles, acceptance_criteria, steps_to_reproduce, expected, actual]
       min_keyword_share: 0.6
   - gaps_flagged: {}                     # llm-evals built-in: a missing actor or hinted need is flagged
   # The judge: the same rubric ticket-lint uses. Scored and reported every run; each

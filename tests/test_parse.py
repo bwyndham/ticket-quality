@@ -85,3 +85,20 @@ def test_type_inferred_as_bug_from_fields():
 def test_empty_markers_ignored():
     t = parse_ticket("# A b c\n\n## Open questions\n- None\n")
     assert t.open_questions == []
+
+
+def test_split_tickets_on_titles_only():
+    from ticket_quality.ticket import parse_tickets, split_tickets
+
+    md = ("intro line\n# First ticket title\n\n## Summary\nA.\n\n<details><summary>Agent context</summary>\n\n"
+          "# not a ticket\n\n</details>\n\n```\n# not a ticket either\n```\n\n# Second ticket title\n\n## Summary\nB.\n")
+    chunks = split_tickets(md)
+    assert len(chunks) == 2 and chunks[0].startswith("# First ticket title")
+    assert [t.title for t in parse_tickets(md)] == ["First ticket title", "Second ticket title"]
+
+
+def test_one_title_is_one_ticket():
+    from ticket_quality.ticket import split_tickets
+
+    assert split_tickets("# Only one\n\n## Summary\nx\n") == ["# Only one\n\n## Summary\nx\n"]
+    assert len(split_tickets("no title at all")) == 1

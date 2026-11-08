@@ -1,0 +1,14 @@
+# Archived: v5, promoted to the live guide 2026-11-08 (PROMOTE +34.7 pts vs v3,
+# run 41419e0b; split 50% -> 100%). v4 plus the 2026-11-08 review: finer splits are fine, find
+# the why anywhere in the request (incl. who is asking and asides) before "Not
+# stated", keep requirements and numbers intact across split tickets, bugs keep
+# their Summary, aim ~180 words (warn 200, limit 220).
+name: v5
+model: claude-sonnet-5-5
+prompt_templates:
+  system: prompts/writer-guide-v5.md
+  user: prompts/user.jinja
+params:
+  max_tokens: 4000
+  effort: low
+skills: []

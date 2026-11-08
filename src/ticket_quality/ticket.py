@@ -287,4 +287,44 @@ def parse_ticket(markdown: str, *, title: str | None = None, ticket_type: str | 
     return t
 
 
-__all__ = ["Ticket", "gherkin_scenarios", "list_items", "normalise_type", "parse_ticket"]
+_H1 = re.compile(r"^#\s+\S")
+
+
+def split_tickets(markdown: str) -> list[str]:
+    """Split Markdown holding one or more tickets into one string per ticket.
+
+    Each ticket starts with its own `# Title` line (tickets use `##` and below for
+    their sections). Lines inside code fences and inside the agent context never
+    start a ticket. Text before the first title is dropped when there are several. With
+    fewer than two titles the whole text is one ticket.
+    """
+    text = (markdown or "").replace("\r\n", "\n")
+    lines = text.split("\n")
+    starts: list[int] = []
+    in_fence = in_details = in_toggle = False
+    for i, line in enumerate(lines):
+        s = line.strip()
+        if s.startswith("```") or s.startswith("~~~"):
+            in_fence = not in_fence
+        elif re.match(r"(?i)<details", s):
+            in_details = True
+        elif re.match(r"(?i)</details>", s):
+            in_details = False
+        elif s.startswith("+++"):
+            in_toggle = not in_toggle
+        elif not (in_fence or in_details or in_toggle) and _H1.match(line):
+            starts.append(i)
+    if len(starts) < 2:
+        return [text]
+    # Text before the first title ("Here are the tickets:") is the writer talking, not a ticket.
+    chunks = ["\n".join(lines[a:b]).strip() for a, b in zip(starts, starts[1:] + [len(lines)])]
+    return [c for c in chunks if c]
+
+
+def parse_tickets(markdown: str, **kwargs: Any) -> list[Ticket]:
+    """Every ticket in `markdown` (see `split_tickets`), parsed."""
+    return [parse_ticket(chunk, **kwargs) for chunk in split_tickets(markdown)]
+
+
+__all__ = ["Ticket", "gherkin_scenarios", "list_items", "normalise_type", "parse_ticket", "parse_tickets",
+           "split_tickets"]

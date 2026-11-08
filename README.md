@@ -22,7 +22,7 @@ standard/
 
 ## The standard in one paragraph
 
-A ticket has **two layers**. The **human section** comes first: title, a 1–3 sentence summary (what, for whom, why), acceptance criteria, out of scope and open questions, under about 150 words, so it reads in 30 seconds. The **agent context** comes last and collapsed: background, assumptions, implementation notes, file paths, logs. It's useful to an agent or the engineer doing the work, and kept away from everyone else. Acceptance criteria are pass/fail and never rest on words like "intuitive", "works correctly" or "fast" without a number. Read `standard/` for the full version; it's a draft for you to edit.
+**One ticket per unit of work**: a request that holds separate pieces of work becomes separate tickets, however it arrived, and one feature can be split into parts that ship on their own. Each ticket has **two layers**. The **human section** comes first: title, a short summary (what changes, for whom), a **Why** for stories or **Impact** for bugs (tasks are exempt; never invented, "Not stated in the request" plus an open question when there's no reason), acceptance criteria, out of scope and open questions, around 180 words and never more than 220. The **agent context** comes last and collapsed: background, assumptions, implementation notes, file paths, logs. It's useful to an agent or the engineer doing the work, and kept away from everyone else. Acceptance criteria are pass/fail and never rest on words like "intuitive", "works correctly" or "fast" without a number. Read `standard/` for the full version; it's a draft for you to edit.
 
 ## Setup
 
@@ -46,7 +46,7 @@ Every model call (the judge in `ticket-lint`, and the eval runs) can go through 
 ticket-lint check ENG-123                          # Linear (LINEAR_API_KEY)
 ticket-lint check https://acme.atlassian.net/browse/PROJ-9   # Jira (JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN)
 ticket-lint check draft.md --ask slack-thread.txt  # also checks it against the request it came from
-pbpaste | ticket-lint check -
+pbpaste | ticket-lint check -                      # several tickets? each starts with its own # Title
 ticket-lint check ENG-1 ENG-2 ENG-3 --no-judge     # rules only: free and instant
 ticket-lint check ENG-123 --strict --format json   # warnings fail too; machine-readable
 ticket-lint standard                               # print every rule and rubric question
@@ -65,7 +65,7 @@ The rubric judge adds its findings to the same list, marked `(judge)`. It runs o
 
 ## Have Claude write them
 
-Once the skills are installed, ask Claude Code to "write a ticket for this" or "turn this thread into a Linear issue". `write-ticket` follows `writer-guide.md`, runs `ticket-lint check` on its draft, fixes errors (at most two rounds), shows you the ticket and its verdict, and files it through your Linear/Jira tools only when you ask. `review-ticket` does the reverse for existing tickets: "review ENG-123" gives the findings and offers a rewrite that keeps the author's intent and moves detail into the agent context.
+Once the skills are installed, ask Claude Code to "write a ticket for this" or "turn this thread into a Linear issue". `write-ticket` follows `writer-guide.md`, splits the request into one ticket per unit of work, runs `ticket-lint check` on its drafts, fixes errors (at most two rounds), shows you the ticket and its verdict, and files it through your Linear/Jira tools only when you ask. `review-ticket` does the reverse for existing tickets: "review ENG-123" gives the findings and offers a rewrite that keeps the author's intent and moves detail into the agent context.
 
 Agent context collapses per tracker: `+++ Agent context` … `+++` in Linear, an expand block in Jira (or a final `## Agent context` section if your Jira tool can't make one), `<details>` everywhere else. The parser recognises all of them.
 
@@ -75,10 +75,11 @@ Agent context collapses per tracker: `+++ Agent context` … `+++` in Linear, an
 
 | Check | Gates? | Catches |
 |---|---|---|
-| `ticket_structure` | yes, critical | missing sections, placeholders, broken Gherkin |
+| `ticket_structure` | yes, critical | missing sections (including Why/Impact), placeholders, broken Gherkin |
+| `tickets_split` | yes | two separate requests merged into one ticket |
 | `ticket_skimmable` | yes | human section over budget, detail not in agent context |
 | `ticket_precise` | yes | topic titles, untestable criteria |
-| `requirements_covered` (llm-evals built-in) | yes | a stated requirement with no acceptance criterion |
+| `requirements_covered` (llm-evals built-in) | yes | a stated requirement that no ticket title or acceptance criterion states |
 | `gaps_flagged` | yes | a missing user or implied need not flagged |
 | `checklist` (judge, rubric.yaml) | after calibration | everything that needs reading comprehension |
 

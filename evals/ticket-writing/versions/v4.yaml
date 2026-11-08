@@ -1,0 +1,12 @@
+# Not promoted: ROLLBACK vs v3 (run d447133f; coverage -7.2). v3 plus one ticket per unit of work (split bundled requests),
+# Summary before Why, one-line "Not stated" whys, no Why on trivial tasks, and
+# examples that don't come from the test cases. Word target still to come.
+name: v4
+model: claude-sonnet-5-5
+prompt_templates:
+  system: prompts/writer-guide-v4.md
+  user: prompts/user.jinja
+params:
+  max_tokens: 4000
+  effort: low
+skills: []

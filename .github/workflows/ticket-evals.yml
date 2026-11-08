@@ -1,6 +1,10 @@
 # Gate changes to how Claude writes tickets. A PR that changes the writer guide, the
 # model or its params (anything the model sees) runs the base branch's version and the
 # PR's on the same requests and posts PROMOTE / HOLD / ROLLBACK as a PR comment.
+#
+# The gate needs an ANTHROPIC_API_KEY repository secret. Without one (the default
+# here: runs happen locally on a Claude subscription), the gate skips itself and
+# leaves a PR comment saying how to run it locally, instead of failing.
 name: ticket-evals
 on:
   pull_request:
@@ -8,6 +12,7 @@ on:
       - "standard/**"
       - "evals/ticket-writing/**"
       - "src/ticket_quality/**"
+      - ".github/workflows/ticket-evals.yml"
 permissions:
   contents: read
   pull-requests: write
@@ -22,8 +27,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: tests
     steps:
+      - name: Check for an API key
+        id: key
+        env:
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: echo "present=$([ -n "$KEY" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
+        if: steps.key.outputs.present == 'true'
       - uses: bwyndham/llm-evals@v0.2.0
+        if: steps.key.outputs.present == 'true'
         with:
           suite: evals/ticket-writing
           anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -31,3 +44,31 @@ jobs:
           # Judges are report-only until calibrated; turn them on (false) once you've
           # labelled them, or for a run you want the rubric scores on.
           skip-judges: "true"
+
+      - name: Explain the skipped gate on the PR
+        if: steps.key.outputs.present != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          # Same marker as the llm-evals action's report, so one comment per suite is kept up to date.
+          marker='<!-- llm-evals:report:ticket-writing -->'
+          body="$marker
+          ## ⏭️ ticket-writing: gate skipped in CI
+
+          This repository has no \`ANTHROPIC_API_KEY\` secret, so CI doesn't run model calls. If this PR changes the writer guide, the model or its parameters, run the gate locally on your Claude subscription and paste the decision here:
+
+          \`\`\`bash
+          # put the changed guide in evals/ticket-writing/prompts/ with a versions/<name>.yaml for it, then:
+          uv run llm-evals gate evals/ticket-writing --candidate versions/<name>.yaml --provider claude-code --skip-judges
+          \`\`\`
+
+          To run the gate here instead, add an \`ANTHROPIC_API_KEY\` repository secret (Settings → Secrets and variables → Actions)."
+          id="$(gh api "repos/$REPO/issues/$PR/comments" --paginate --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | tail -n1)"
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -f body="$body" >/dev/null
+          else
+            gh api "repos/$REPO/issues/$PR/comments" -f body="$body" >/dev/null
+          fi
+          echo "::notice title=Eval gate skipped::No ANTHROPIC_API_KEY secret; run the gate locally with --provider claude-code."

@@ -92,7 +92,7 @@ uv run llm-evals gate evals/ticket-writing --candidate versions/v2.yaml \
 uv run llm-evals aa evals/ticket-writing --runs 5 --provider claude-code   # measure noise before trusting the 5-pt tolerance
 ```
 
-**To try a change to the guide**, open a PR that edits `standard/writer-guide.md` (or the model in `versions/current.yaml`). `.github/workflows/ticket-evals.yml` runs the base branch's guide against yours and comments with the decision. Add the `ANTHROPIC_API_KEY` repo secret first.
+**To try a change to the guide**, gate it locally on your subscription: copy the guide to `evals/ticket-writing/prompts/writer-guide-vN.md`, edit it, add a `versions/vN.yaml` pointing at it, and run `uv run llm-evals gate evals/ticket-writing --candidate versions/vN.yaml --provider claude-code --skip-judges`. On PROMOTE, copy it over `standard/writer-guide.md` (the baseline, `versions/current.yaml`, points there), run `uv run llm-evals promote evals/ticket-writing versions/current.yaml` and `ticket-lint install-skills`, and open a PR. CI (`.github/workflows/ticket-evals.yml`) runs the tests; its eval gate runs only if the repo has an `ANTHROPIC_API_KEY` secret, and otherwise skips itself with a PR comment pointing back to the local run.
 
 **To make the judge count**, label its answers: run a gate without `--skip-judges`, then `uv run llm-evals calibration serve --db evals/ticket-writing/.evals/evals.sqlite` (or `calibration label ... --check checklist`). Once a rubric question has ~50 labels and agrees with you (Cohen's κ ≥ 0.6), it gates. Until then it's reported only. Rewording a question resets its calibration, so settle the wording first.
 

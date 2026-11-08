@@ -35,15 +35,26 @@ def _sentences(ask: str) -> list[str]:
     return [s.strip(" -*•") for s in re.split(r"(?<=[.!?])\s+|\s+-\s+|\n", text) if s.strip()]
 
 
+# Where a bundled request moves on to its next, separate ask.
+_NEXT_ASK = re.compile(r"(?i)(?:\b2\)\s|\bSeparately,|\balso, totally separate thing|\bSecond(?:ly)?, on\b)")
+
+
 def respond(*, system: str | None, user: str, rng: Any) -> dict[str, Any]:
     m = re.search(r"<request>\s*(.*?)\s*</request>", user, re.DOTALL)
     ask = m.group(1) if m else user
     system = system or ""
+    splits = "One ticket per unit of work" in system
+    parts = [p for p in _NEXT_ASK.split(ask) if p.strip()] if splits else [ask]
+    tickets = [_ticket(part, ask, system, rng) for part in parts]
+    return {"ticket_markdown": "\n\n".join(tickets).strip() + "\n"}
+
+
+def _ticket(part: str, ask: str, system: str, rng: Any) -> str:
     layered = "Agent context" in system and "<details>" in system
     precise = "words a tester can't check" in system
     flags_gaps = "Flag gaps" in system
 
-    reqs = [s for s in _sentences(ask) if _CUES.search(s) and not _SKIP.match(s)]
+    reqs = [s for s in _sentences(part) if _CUES.search(s) and not _SKIP.match(s)]
     if reqs and rng.random() < 0.05:  # a little sampling noise
         reqs = reqs[:-1]
     reqs = reqs or ["Make the requested change described in the background"]
@@ -69,22 +80,22 @@ def respond(*, system: str | None, user: str, rng: Any) -> dict[str, Any]:
     if flags_gaps and not actor:
         assumptions.append("The request doesn't say who the user is; assumed it is an internal team member.")
 
-    background = " ".join(_sentences(ask))
+    background = " ".join(_sentences(part))
     why = []
     if "## Why" in system:  # the guide asks for a Why section: the mock never invents one
         why = ["## Why", "Not stated in the request.", ""]
-    parts = [f"# {title}", "", "**Type:** Story", "", *why, "## Summary", summary, "", "## Acceptance criteria", *ac, "",
-             "## Out of scope", "- Changes not mentioned in the request", ""]
+    lines = [f"# {title}", "", "**Type:** Story", "", "## Summary", summary, "", *why, "## Acceptance criteria", *ac,
+             "", "## Out of scope", "- Changes not mentioned in the request", ""]
     if layered:
-        parts += ["<details>", "<summary>Agent context</summary>", "", "### Background", background, ""]
+        lines += ["<details>", "<summary>Agent context</summary>", "", "### Background", background, ""]
         if assumptions:
-            parts += ["### Assumptions", *[f"- {a}" for a in assumptions], ""]
-        parts += ["</details>"]
+            lines += ["### Assumptions", *[f"- {a}" for a in assumptions], ""]
+        lines += ["</details>"]
     else:
-        parts += ["## Background", background, ""]
+        lines += ["## Background", background, ""]
         if assumptions:
-            parts += ["## Assumptions", *[f"- {a}" for a in assumptions]]
-    return {"ticket_markdown": "\n".join(parts).strip() + "\n"}
+            lines += ["## Assumptions", *[f"- {a}" for a in assumptions]]
+    return "\n".join(lines).strip()
 
 
 __all__ = ["respond"]

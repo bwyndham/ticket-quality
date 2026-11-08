@@ -53,7 +53,9 @@ def test_install_skills_copies_current_guide(tmp_path):
 @pytest.mark.parametrize("path", ["standard/writer-guide.md", "evals/ticket-writing/prompts/seeded_inline_detail.md",
                                   "evals/ticket-writing/prompts/writer-guide-v1.md",
                                   "evals/ticket-writing/prompts/writer-guide-v2.md",
-                                  "evals/ticket-writing/prompts/writer-guide-v3.md"])
+                                  "evals/ticket-writing/prompts/writer-guide-v3.md",
+                                  "evals/ticket-writing/prompts/writer-guide-v4.md",
+                                  "evals/ticket-writing/prompts/writer-guide-v5.md"])
 def test_prompts_are_safe_as_jinja_templates(path):
     # The eval suite renders these with Jinja; a stray {{, {% or {# would break or change them.
     text = (ROOT / path).read_text()
@@ -112,7 +114,7 @@ def test_coverage_counts_only_acceptance_criteria_and_bug_fields():
     case = next(c for c in build_cases(suite) if (c.source or {}).get("atoms") and not c.source.get("hinted_atom_ids"))
     phrases = [a["text"] for a in case.source["atoms"]]
     def result(summary, ac):
-        out = {"summary": summary, "acceptance_criteria": ac, "steps_to_reproduce": [], "expected": "", "actual": ""}
+        out = {"summary": summary, "titles": [], "acceptance_criteria": ac, "steps_to_reproduce": [], "expected": "", "actual": ""}
         return Result(run_id="r", case_id=case.id, version_id="v", sample_idx=0, output=out)
     assert not check.score(case, result(" ".join(phrases), ["Something else happens"]), None).passed
     assert check.score(case, result("", phrases), None).passed
@@ -125,5 +127,5 @@ def test_live_guide_is_the_promoted_version():
     from llm_evals.runners.manifest import load_manifest
 
     current = load_manifest(SUITE / "versions" / "current.yaml", SUITE)
-    v3 = load_manifest(SUITE / "versions" / "v3.yaml", SUITE)
-    assert current.id == v3.id
+    v5 = load_manifest(SUITE / "versions" / "v5.yaml", SUITE)
+    assert current.id == v5.id

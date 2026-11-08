@@ -23,7 +23,7 @@ from typing import Optional
 import typer
 
 from ticket_quality.standard import REPO_ROOT, load_standard
-from ticket_quality.ticket import Ticket, parse_ticket
+from ticket_quality.ticket import Ticket, parse_ticket, parse_tickets
 from ticket_quality.validate import Report, validate
 
 app = typer.Typer(help="Check Jira/Linear tickets against your ticket standard.", no_args_is_help=True,
@@ -53,8 +53,30 @@ def _read_text_arg(value: Optional[str]) -> Optional[str]:
     return p.read_text(encoding="utf-8") if p.is_file() else value
 
 
+def load_tickets(ref: str, *, tracker: Optional[str], title: Optional[str], ticket_type: Optional[str]) -> list[Ticket]:
+    """Tickets from stdin or a file (several, one after another, each with its own `# Title`),
+    or one ticket from a tracker."""
+    if ref == "-":
+        return _parse_many(sys.stdin.read(), title=title, ticket_type=ticket_type, source={"file": "stdin"})
+    path = Path(ref)
+    if path.is_file() and path.suffix.lower() != ".json":
+        return _parse_many(path.read_text(encoding="utf-8"), title=title, ticket_type=ticket_type,
+                           source={"file": str(path)})
+    return [load_ticket(ref, tracker=tracker, title=title, ticket_type=ticket_type)]
+
+
+def _parse_many(text: str, *, title: Optional[str], ticket_type: Optional[str], source: dict) -> list[Ticket]:
+    tickets = parse_tickets(text, ticket_type=ticket_type, source=source)
+    if len(tickets) == 1 and title:
+        tickets[0] = parse_ticket(text, title=title, ticket_type=ticket_type, source=source)
+    for i, t in enumerate(tickets):
+        if len(tickets) > 1:
+            t.source = {**source, "part": f"{i + 1}/{len(tickets)}"}
+    return tickets
+
+
 def load_ticket(ref: str, *, tracker: Optional[str], title: Optional[str], ticket_type: Optional[str]) -> Ticket:
-    """A ticket from stdin, a file (.md/.txt, or .json from the eval suite or an API), or a tracker."""
+    """One ticket from stdin, a file (.md/.txt, or .json from the eval suite or an API), or a tracker."""
     if ref == "-":
         return parse_ticket(sys.stdin.read(), title=title, ticket_type=ticket_type, source={"file": "stdin"})
     path = Path(ref)
@@ -83,6 +105,8 @@ _COLOR = {"PASS": typer.colors.GREEN, "WARN": typer.colors.YELLOW, "FAIL": typer
 def render_text(report: Report, strict: bool) -> str:
     t, v = report.ticket, report.verdict(strict)
     ident = t.source.get("id") or t.source.get("file") or ""
+    if t.source.get("part"):
+        ident += f" (ticket {t.source['part']})"
     lines = [typer.style(f"{v}", fg=_COLOR[v], bold=True) + f"  {ident}  \"{t.title or '(no title)'}\"  [{t.type}]"]
     s = report.stats
     agent = {"collapsed": "collapsed ✓", "heading": "heading (not collapsed)", "none": "none"}[s["agent_context"]]
@@ -133,16 +157,18 @@ def check(
     reports, any_fail, errors = [], False, 0
     for ref in refs:
         try:
-            ticket = load_ticket(ref, tracker=tracker, title=title, ticket_type=ticket_type)
+            tickets = load_tickets(ref, tracker=tracker, title=title, ticket_type=ticket_type)
         except Exception as exc:  # noqa: BLE001 - report and move on to the next ref
             typer.secho(f"ERROR  {ref}: {exc}", fg=typer.colors.RED, err=True)
             errors += 1
             continue
-        report = validate(ticket, std, judge_client=client, ask=ask_text)
-        any_fail |= report.verdict(strict) == "FAIL"
-        reports.append(report)
-        if fmt == "text":
-            typer.echo(render_text(report, strict) + "\n")
+        for ticket in tickets:
+            siblings = [t for t in tickets if t is not ticket]
+            report = validate(ticket, std, judge_client=client, ask=ask_text, siblings=siblings)
+            any_fail |= report.verdict(strict) == "FAIL"
+            reports.append(report)
+            if fmt == "text":
+                typer.echo(render_text(report, strict) + "\n")
     if fmt == "json":
         out = [r.as_dict(strict) for r in reports]
         typer.echo(json.dumps(out[0] if len(out) == 1 else out, indent=2))

@@ -42,14 +42,16 @@ _ORDER = {"error": 0, "warn": 1, "info": 2}
 
 
 def validate(ticket: Ticket, standard: Standard, *, judge_client: Any | None = None,
-             ask: str | None = None) -> Report:
+             ask: str | None = None, siblings: list[Ticket] | None = None) -> Report:
+    """`siblings`: the other tickets written from the same request, so questions about
+    the request as a whole are judged across the set."""
     findings = run_rules(ticket, standard)
     judged, note = False, ""
     if judge_client is not None:
         from ticket_quality.judge import judge_ticket
 
         try:
-            findings += judge_ticket(ticket, standard, judge_client, ask=ask)
+            findings += judge_ticket(ticket, standard, judge_client, ask=ask, siblings=siblings)
             judged = True
         except Exception as exc:  # noqa: BLE001 - rules still stand on their own
             note = f"judge skipped: {type(exc).__name__}: {exc}"

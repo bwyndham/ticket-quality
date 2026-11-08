@@ -54,7 +54,7 @@ def test_vague_terms_match_whole_words_only():
 
 
 def test_human_section_budget_warns_then_fails():
-    words = " ".join(["word"] * 160)
+    words = " ".join(["word"] * 210)
     warn = run_rules(ticket(["a happens"], summary=words), STD)
     assert any(f.rule == "human_section_budget" and f.severity == "warn" for f in warn)
     fail = run_rules(ticket(["a happens"], summary=" ".join(["word"] * 260)), STD)

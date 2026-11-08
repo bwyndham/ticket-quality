@@ -64,7 +64,7 @@ rules:
     severity: error
     what: The human section stays short enough to read in about 30 seconds.
     params:
-      warn_words: 150   # ~30 seconds of reading
+      warn_words: 200   # 2026-11-08 review: 27/27 tickets of 85-211 words rated "reads fine"
       max_words: 220
 
   - id: summary_length

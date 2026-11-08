@@ -130,7 +130,7 @@ def _gherkin(t: Ticket, p: dict[str, Any]) -> list[tuple[str, str]]:
 @rule("human_section_budget")
 def _budget(t: Ticket, p: dict[str, Any]) -> list[tuple[str, str]]:
     n = human_words(t)
-    warn_at, max_at = p.get("warn_words", 150), p.get("max_words", 220)
+    warn_at, max_at = p.get("warn_words", 200), p.get("max_words", 220)
     if n > max_at:
         return [(f"Human section is {n} words (limit {max_at}); readers will skim past it.",
                  "Move background, rationale and technical detail into the collapsed Agent context.")]

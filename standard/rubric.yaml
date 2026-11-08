@@ -62,11 +62,11 @@ items:
 
   - id: single_deliverable
     applies: always
-    severity: warn
+    severity: error
     question: >-
-      Does the ticket describe one coherent deliverable that one person or pair
-      could finish within a sprint, rather than several unrelated pieces of work
-      that should be separate tickets?
+      Is each ticket one unit of work that can be built, tested and shipped on
+      its own, small enough for one person or pair to finish within a sprint,
+      rather than several separate pieces of work combined into one ticket?
 
   - id: self_contained
     applies: always
@@ -100,13 +100,23 @@ items:
       (new features, numbers, limits, formats, permissions or behaviours), keeping
       anything it inferred under assumptions or open questions?
 
+  - id: split_matches_request
+    applies: with_ask
+    severity: error
+    question: >-
+      Does each separate piece of work in the request get its own ticket(s), with
+      no unrelated asks combined into one ticket? Splitting one feature into parts
+      that can each ship on their own is fine. Answer yes if the request holds
+      only one piece of work and there is one ticket.
+
   - id: ask_fully_covered
     applies: with_ask
     severity: error
     question: >-
       Is every separate thing the request asks for covered by at least one
-      acceptance criterion, with none dropped and no two different asks merged
-      into one criterion?
+      acceptance criterion in this ticket or the other tickets written from the
+      same request, with none dropped and no two different asks merged into one
+      criterion?
 
   - id: why_not_invented
     applies: with_ask

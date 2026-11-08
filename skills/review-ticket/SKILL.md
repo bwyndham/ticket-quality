@@ -20,6 +20,7 @@ description: Review an existing Jira or Linear ticket (or a pasted/drafted one) 
 3. **Offer a rewrite.** If anything failed, offer a rewritten ticket following `writer-guide.md`:
    - Keep the author's intent and every requirement they stated. Don't add requirements; where the original is vague, turn the gap into an open question instead of guessing.
    - Move background, implementation detail, file paths and logs into the collapsed agent context rather than deleting them.
+   - If the ticket bundles separate pieces of work (the `single_deliverable` finding, or asks that could ship on their own), rewrite it as one ticket per unit of work and say which original requirements went where.
    - Re-run `ticket-lint check` on the rewrite and show its verdict.
 
 4. **Update the tracker only when asked**, using the Linear or Jira tool in this session.
